@@ -1,6 +1,6 @@
 body {
     font-family: 'Arial', sans-serif;
-    background-color: #d41313; /* Reddish background color of the body */
+    background-color: #b66565; /* Reddish background color of the body */
     color: #333;
     margin: 0;
     padding: 0;
@@ -8,6 +8,10 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+.highlight {
+    background-color: yellow; /* Or any other highlight color */
+    color: black; /* Optional: change text color if needed */
 }
 
 .container {

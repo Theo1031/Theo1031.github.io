@@ -51,33 +51,47 @@ function updateSpeed() {
 function showAllWordsForNavigation() {
     clearInterval(interval); // Stop the current reading interval
     const backdrop = document.getElementById('backdrop');
-    backdrop.innerHTML = ''; // Clear existing content in the backdrop
+    const textDisplay = document.getElementById('text-display');
+    const quitReading = document.getElementById('quit-reading');
 
-    // Create a new container for words navigation
+    // Hide the text display and quit reading button
+    textDisplay.style.display = 'none';
+    quitReading.style.display = 'none';
+
+    // Create and display a container for words navigation
     const wordsContainer = document.createElement('div');
     wordsContainer.id = 'words-navigation';
+    backdrop.appendChild(wordsContainer);
 
-    // Populate the new container with all words as clickable elements
+    // Populate the container with all words as clickable elements
     words.forEach((word, index) => {
         const wordSpan = document.createElement('span');
         wordSpan.textContent = word + ' ';
         wordSpan.classList.add('word'); // Add class for styling
+
+        // Highlight the last word in play
+        if (index === currentIndex) {
+            wordSpan.classList.add('highlight'); // Add highlight class
+        }
+
         wordSpan.onclick = function() {
             currentIndex = index; // Set the currentIndex to the word clicked
             displayCurrentWord(); // Update the displayed word
 
-            // Re-setup the backdrop for reading session
-            backdrop.innerHTML = ''; // Clear words navigation
-            backdrop.appendChild(document.getElementById('text-display')); // Append the text display
-            backdrop.appendChild(document.getElementById('quit-reading')); // Append the quit button
-            backdrop.style.display = 'flex'; // Show the backdrop
+            // Hide the words container and show the text display and quit button
+            wordsContainer.style.display = 'none';
+            textDisplay.style.display = 'block';
+            quitReading.style.display = 'block';
+
+            backdrop.removeChild(wordsContainer); // Remove the words container
             startInterval(); // Restart the reading interval
         };
         wordsContainer.appendChild(wordSpan);
     });
-
-    backdrop.appendChild(wordsContainer); // Append the words container to the backdrop
 }
+
+
+
 
 // Event listener for the "Start Reading" button
 document.getElementById('start-reading').addEventListener('click', function() {
