@@ -1,32 +1,66 @@
 let currentIndex = 0;
 let interval;
 let words = [];
-let maxSpeed = 1000; // Maximum interval time in milliseconds (slowest speed)
-let minSpeed = 50; // Minimum interval time in milliseconds (fastest speed)
-let defaultSpeed = (maxSpeed + minSpeed) / 2; // Middle value for moderate speed
-let speed = defaultSpeed; // Current speed
+const maxSpeed = 1000; // Maximum slider value (slowest speed)
+const minSpeed = 50;  // Minimum slider value (fastest speed)
+let speed = (maxSpeed + minSpeed) / 2; // Initial speed
 
-// Function to update the display with the current word
-function displayCurrentWord() {
-    const textDisplay = document.getElementById('text-display');
-    if (currentIndex < words.length) {
-        textDisplay.textContent = words[currentIndex];
+// Calculate reading speed based on slider value
+function calculateReadingSpeed(sliderValue) {
+    const minInterval = 100;  // Minimum interval (fastest speed)
+    const maxInterval = 1000; // Maximum interval (slowest speed)
+    const interval = maxInterval - ((sliderValue - minSpeed) / (maxSpeed - minSpeed) * (maxInterval - minInterval));
+    return interval;
+}
+
+// Update the speed based on slider input
+function updateSpeed() {
+    const sliderValue = parseInt(document.getElementById('speed-control').value);
+    speed = calculateReadingSpeed(sliderValue);
+    if (interval) {
+        clearInterval(interval);
+        startInterval();
     }
 }
 
-// Function to start the reading process
-function startReading(text) {
-    clearInterval(interval); // Clear any existing intervals
-    words = text.split(/\s+/); // Split the text into words
-    currentIndex = 0; // Reset the index to the start
-    displayCurrentWord(); // Display the first word
-    document.getElementById('backdrop').style.display = 'flex'; // Show the reading backdrop
-    startInterval(); // Start the interval to display each word
+let voices = [];
+window.onload = function() {
+    voices = speechSynthesis.getVoices();
+};
+
+// Function to speak a word
+function speakWord(word) {
+    const utterance = new SpeechSynthesisUtterance(word);
+    if (voices.length > 0) {
+        utterance.voice = voices.find(voice => voice.lang === "en-US");
+    }
+    utterance.pitch = 1; // Adjust pitch if needed
+    utterance.rate = 1; // Adjust rate if needed
+    speechSynthesis.speak(utterance);
 }
 
-// Function to handle the interval for displaying words
+// Display the current word and speak it
+function displayCurrentWord() {
+    const textDisplay = document.getElementById('text-display');
+    if (currentIndex < words.length) {
+        const currentWord = words[currentIndex];
+        textDisplay.textContent = currentWord;
+        speakWord(currentWord); // Speak the word
+    }
+}
+
+// Start the reading process
+function startReading(text) {
+    clearInterval(interval);
+    words = text.split(/\s+/);
+    currentIndex = 0;
+    displayCurrentWord();
+    startInterval();
+}
+
+// Handle the interval for displaying words
 function startInterval() {
-    clearInterval(interval); // Ensure any existing interval is cleared
+    clearInterval(interval);
     interval = setInterval(function() {
         if (currentIndex < words.length - 1) {
             currentIndex++;
@@ -37,86 +71,55 @@ function startInterval() {
     }, speed);
 }
 
-// Function to update speed based on the speed control input
-function updateSpeed() {
-    const sliderValue = document.getElementById('speed-control').value;
-    speed = maxSpeed - sliderValue; // Invert the speed calculation
-    if (interval) {
-        clearInterval(interval); // Clear current interval
-        startInterval(); // Restart reading with the new speed
-    }
-}
-
-// Function to show all words within the backdrop
+// Show all words for navigation
 function showAllWordsForNavigation() {
-    clearInterval(interval); // Stop the current reading interval
+    clearInterval(interval);
     const backdrop = document.getElementById('backdrop');
     const textDisplay = document.getElementById('text-display');
     const quitReading = document.getElementById('quit-reading');
-
-    // Hide the text display and quit reading button
     textDisplay.style.display = 'none';
     quitReading.style.display = 'none';
-
-    // Create and display a container for words navigation
     const wordsContainer = document.createElement('div');
     wordsContainer.id = 'words-navigation';
     backdrop.appendChild(wordsContainer);
-
-    // Populate the container with all words as clickable elements
     words.forEach((word, index) => {
         const wordSpan = document.createElement('span');
         wordSpan.textContent = word + ' ';
-        wordSpan.classList.add('word'); // Add class for styling
-
-        // Highlight the last word in play
+        wordSpan.classList.add('word');
         if (index === currentIndex) {
-            wordSpan.classList.add('highlight'); // Add highlight class
+            wordSpan.classList.add('highlight');
         }
-
         wordSpan.onclick = function() {
-            currentIndex = index; // Set the currentIndex to the word clicked
-            displayCurrentWord(); // Update the displayed word
-
-            // Hide the words container and show the text display and quit button
+            currentIndex = index;
+            displayCurrentWord();
             wordsContainer.style.display = 'none';
             textDisplay.style.display = 'block';
             quitReading.style.display = 'block';
-
-            backdrop.removeChild(wordsContainer); // Remove the words container
-            startInterval(); // Restart the reading interval
+            backdrop.removeChild(wordsContainer);
+            startInterval();
         };
         wordsContainer.appendChild(wordSpan);
     });
 }
 
-
-
-
-// Event listener for the "Start Reading" button
+// Event listeners
 document.getElementById('start-reading').addEventListener('click', function() {
-    const textInput = document.getElementById('text-input').value; // Get the input text
+    const textInput = document.getElementById('text-input').value;
     if (textInput.trim() !== '') {
-        startReading(textInput); // Start reading the input text
+        startReading(textInput);
     } else {
-        alert('Please enter some text before starting to read.'); // Alert if there is no text
+        alert('Please enter some text before starting to read.');
     }
 });
 
-// Event listener for the "Back" button
 document.getElementById('back-button').addEventListener('click', showAllWordsForNavigation);
-
-// Event listener for the "Quit" button
 document.getElementById('quit-reading').addEventListener('click', function() {
-    clearInterval(interval); // Stop the reading process
-    document.getElementById('backdrop').style.display = 'none'; // Hide the reading backdrop
-    currentIndex = 0; // Reset the index
+    clearInterval(interval);
+    document.getElementById('backdrop').style.display = 'none';
+    currentIndex = 0;
 });
 
-// Event listener for the speed control
 document.getElementById('speed-control').addEventListener('input', updateSpeed);
-
-// Initialize the speed control slider
 document.getElementById('speed-control').min = minSpeed;
 document.getElementById('speed-control').max = maxSpeed;
-document.getElementById('speed-control').value = defaultSpeed;
+document.getElementById('speed-control').value = speed;
